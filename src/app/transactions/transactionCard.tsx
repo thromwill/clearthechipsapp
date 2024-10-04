@@ -15,7 +15,7 @@ type TransactionCardProps = {
 
 export default function TransactionCard({ transaction }: TransactionCardProps) {
   return (
-    <div className="flex flex-col bg-white w-60 h-80 shadow-lg rounded-lg p-4 transition-transform">
+    <div className="flex flex-col bg-white w-60 h-80 rounded-lg p-4 transition-transform">
       <div className="flex justify-end w-full">
         <button className="bg-blue-500 text-white text-sm px-2 py-1 rounded-lg shadow">
           Remind

@@ -1,9 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Slider } from "@/components/ui/slider"
 import {
   Select,
   SelectContent,
@@ -20,8 +18,8 @@ export default function Settings() {
   const [theme, setTheme] = useState("dark")
 
   return (
-    <div className="container mx-auto max-w-2xl p-4 space-y-8">
-      <h1 className="text-3xl font-bold">Settings</h1>
+    <div className="min-h-screen overflow-auto container mx-auto max-w-2xl p-4 space-y-8">
+      <h1 className="mt-10 text-3xl font-bold">Settings</h1>
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Notifications</h2>
@@ -33,21 +31,36 @@ export default function Settings() {
             onCheckedChange={setNotifications}
           />
         </div>
-      </div>
-
-      <Separator />
-
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Sound</h2>
-        <div className="space-y-2">
-          <Label htmlFor="volume">Volume</Label>
-          <Slider
-            id="volume"
-            min={0}
-            max={100}
-            step={1}
-            value={[volume]}
-            onValueChange={(value) => setVolume(value[0])}
+        <div className="flex items-center justify-between">
+          <Label htmlFor="notifications">Enable notifications</Label>
+          <Switch
+            id="notifications"
+            checked={notifications}
+            onCheckedChange={setNotifications}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="notifications">Enable notifications</Label>
+          <Switch
+            id="notifications"
+            checked={notifications}
+            onCheckedChange={setNotifications}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="notifications">Enable notifications</Label>
+          <Switch
+            id="notifications"
+            checked={notifications}
+            onCheckedChange={setNotifications}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="notifications">Enable notifications</Label>
+          <Switch
+            id="notifications"
+            checked={notifications}
+            onCheckedChange={setNotifications}
           />
         </div>
       </div>
@@ -70,20 +83,7 @@ export default function Settings() {
           </Select>
         </div>
       </div>
-
-      <Separator />
-
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Account</h2>
-        <div className="flex space-x-4">
-          <Button variant="outline">Change Password</Button>
-          <Button variant="destructive">Delete Account</Button>
-        </div>
-      </div>
-
-      <Separator />
-
-      <Button className="w-full">Save Changes</Button>
+      
     </div>
   )
 }

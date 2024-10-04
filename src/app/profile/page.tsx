@@ -1,7 +1,9 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+"use client"
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import ChipCases from "../components/chipCases"
+import ChipCases from "../components/shared/chipCases"
+import { useDataContext } from '../Context';
 
 const chipCaseData = [
   { id: 1 },
@@ -18,33 +20,28 @@ const stats = [
 ]
 
 export default function Profile() {
+  const { data, loading, error } = useDataContext();
+
+  useEffect(() => {
+    console.log('Context Data in Profile:', data);
+  }, [data]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
   return (
     <main className="min-h-screen overflow-auto p-4 md:p-8">
       <div className="container mx-auto max-w-4xl space-y-8">
-        <Card>
-          <CardHeader className="flex flex-col items-center space-y-4 sm:flex-row sm:justify-between sm:space-y-0">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src="/placeholder.svg" alt="Profile picture" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-2xl font-bold">John Doe</h1>
-                <p className="text-muted-foreground">Poker Enthusiast</p>
-              </div>
-            </div>
-            <button className="rounded-full bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90">
-              Edit Profile
-            </button>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-          </CardContent>
-        </Card>
-
+        {data && data.user && (
+          <section>
+            <h2 className="mb-4 text-2xl font-bold">Welcome, {data.user.firstName}</h2>
+          </section>
+        )}
         <section>
           <h2 className="mb-4 text-2xl font-bold">Chip Cases</h2>
           <ChipCases chipCaseData={chipCaseData} />

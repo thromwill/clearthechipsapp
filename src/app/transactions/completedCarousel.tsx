@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Carousel from "../components/carousel";
+import Carousel from "../components/shared/carousel";
 import TransactionCard from "./transactionCard";
 
 const CompletedCarousel: React.FC<CompletedCarouselProps> = ({

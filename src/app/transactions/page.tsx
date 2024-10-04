@@ -15,41 +15,33 @@ const transactions: Transaction[] = Array.from({ length: 10 }, (_, i) => ({
 export default function Transactions() {
   return (
     <div className="p-4 md:p-8 min-h-screen overflow-y-auto">
-      <div className="flex flex-row md:flex-row justify-between items-end w-full">
-        <div className="flex flex-col">
-          <h1 className="text-white text-2xl md:text-3xl">Pending</h1>
-          <h1 className="text-white text-2xl md:text-3xl">Transactions</h1>
-        </div>
-        <div className="flex items-center justify-center">
-            <button className="text-sm text-white">
+      <div className="space-y-8 md:space-y-12">
+        <section>
+          <div className="flex justify-between items-end mb-4">
+            <h2 className="text-black text-2xl md:text-3xl font-semibold">
+              Pending<br />Transactions
+            </h2>
+            <button className="text-sm text-black flex items-center justify-center">
               See All
+              <ChevronRight className="text-black ml-1 h-4 w-4" />
             </button>
-            <ChevronRight className="text-white ml-1 h-4 w-4" />
           </div>
-      </div>
+          <PendingCarousel transactions={transactions} />
+        </section>
 
-      <PendingCarousel transactions={transactions} />
-
-      <div className="flex flex-col -my-12">
-        <div className="flex flex-red md:flex-row justify-between items-end w-full mt-8">
-          <div className="flex flex-col">
-            <h1 className="text-white text-2xl md:text-3xl">Completed</h1>
-            <h1 className="text-white text-2xl md:text-3xl">Transactions</h1>
-          </div>
-          <div className="flex items-center justify-center">
-            <button className="text-sm text-white">
+        <section>
+          <div className="flex justify-between items-end mb-4">
+            <h2 className="text-black text-2xl md:text-3xl font-semibold">
+              Completed<br />Transactions
+            </h2>
+            <button className="text-sm text-black flex items-center justify-center">
               See All
+              <ChevronRight className="text-black ml-1 h-4 w-4" />
             </button>
-            <ChevronRight className="text-white ml-1 h-4 w-4" />
           </div>
-        </div>
-
-        <div className="-my-10">
           <CompletedCarousel transactions={transactions} />
-        </div>
+        </section>
       </div>
-
-      <div className="h-96"></div>
     </div>
   );
 }
@@ -62,6 +54,3 @@ type Transaction = {
   date: string;
   avatarPath: string;
 };
-
-
-

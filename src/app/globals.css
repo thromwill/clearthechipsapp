@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-    background-color: #c7c7c7;
+    background-color: rgb(239, 239, 239);
 }
 
 /* Carousel pagination dot appearance */

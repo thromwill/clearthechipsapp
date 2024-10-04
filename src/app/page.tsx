@@ -1,99 +1,130 @@
 "use client"
-import React, { useState } from 'react';
-import Modal from 'react-modal';
+
+import React, { useState, useEffect } from 'react'
+import { useUser } from "@clerk/nextjs"
+import { useDataContext } from './Context'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader} from "@/components/ui/card"
 
 export default function Home() {
+  const { user } = useUser()
+
+  const handleJoinGame = () => {
+    
+  }
+  
   return (
     <div className="flex flex-col justify-center items-center min-h-screen p-4 md:p-8">
-      <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center space-y-6 w-full max-w-xs md:max-w-md">
-        <NumberInput maxLength={5} />
-        <button
-          className="w-full h-10 md:h-12 bg-blue-500 text-white font-medium text-base md:text-lg rounded-lg hover:bg-blue-600 transition duration-300"
-        >
-          Join Game
-        </button>
-        <div className="w-full flex justify-center">
-          <CreateGame />
-        </div>
-      </div>
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <NumberInput maxLength={5} />
+          <Button
+            className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium text-lg transition duration-300"
+            onClick={handleJoinGame}
+          >
+            Join Game
+          </Button>
+          <div className="w-full flex justify-center">
+            <CreateGame />
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
 }
 
-function NumberInput({ maxLength }) {
-  const [value, setValue] = useState('');
+function NumberInput({ maxLength }: { maxLength: number }) {
+  const [value, setValue] = useState('')
 
-  const handleChange = (event) => {
-    const newValue = event.target.value;
-
-    // Check if the new value exceeds the maxLength and is numeric
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value
     if (newValue.length <= maxLength && /^[0-9]*$/.test(newValue)) {
-      setValue(newValue);
+      setValue(newValue)
     }
-  };
+  }
 
   return (
-    <input 
-      type="number" 
-      value={value} 
-      onChange={handleChange} 
+    <Input
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      value={value}
+      onChange={handleChange}
       placeholder="Enter Game Pin"
-      className="w-full h-12 md:h-16 border border-gray-300 rounded px-4 text-base md:text-lg text-center font-semibold focus:outline-none focus:border-blue-500 hide-caret"
+      className="h-12 text-center text-lg font-semibold focus:ring-2 focus:ring-gray-300 border border-gray-200 text-gray-800 placeholder-gray-400"
       maxLength={maxLength}
     />
-  );
+  )
 }
 
 function CreateGame() {
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false)
+  const [gameName, setGameName] = useState('')
+  const [stakes, setStakes] = useState('')
 
   return (
-    <div>
-      <button
-        className="text-blue-500 text-sm font-medium hover:underline"
+    <>
+      <Button
+        variant="link"
+        className="text-blue-500 hover:text-blue-600"
         onClick={() => setShowModal(true)}
       >
         Create New Game
-      </button>
-      <Modal 
-        className="flex items-center justify-center min-h-screen" 
-        isOpen={showModal} 
-        onRequestClose={() => setShowModal(false)} 
-        contentLabel="Create Game"
-      >
-        <div className="bg-white p-6 w-full max-w-md max-h-[80vh] rounded-lg overflow-auto">
-          {/* Input for Game Name */}
-          <input
-            type="text"
-            placeholder="Game Name"
-            className="w-full h-12 border border-gray-300 rounded px-4 text-lg focus:outline-none focus:border-blue-500"
-          />
-
-          {/* Dropdown for Stakes */}
-          <select className="w-full h-12 border border-gray-300 rounded px-4 text-lg focus:outline-none hover:border-blue-500 my-4">
-            <option value="">Select Stakes</option>
-            <option value="$0.01 / $0.02">$0.01 / $0.02</option>
-            <option value="$0.02 / $0.05">$0.02 / $0.05</option>
-            <option value="$0.05 / $0.10">$0.05 / $0.10</option>
-            <option value="$0.10 / $0.20">$0.10 / $0.20</option>
-            <option value="$0.25 / $0.50">$0.25 / $0.50</option>
-            <option value="$0.50 / $1.00">$0.50 / $1.00</option>
-          </select>
-
-          {/* Buttons for Create and Cancel */}
-          <div className="flex flex-col space-y-4">
-            <button className="w-full h-12 bg-blue-500 text-white font-medium text-lg rounded-lg hover:bg-blue-600 transition duration-300">
+      </Button>
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center text-gray-800">Create New Game</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="text"
+              placeholder="Game Name"
+              value={gameName}
+              onChange={(e) => setGameName(e.target.value)}
+              className="bg-white border-gray-300 text-gray-800 placeholder-gray-400"
+            />
+            <Select value={stakes} onValueChange={setStakes}>
+              <SelectTrigger className="bg-white border-gray-300 text-gray-800">
+                <SelectValue placeholder="Select Stakes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0.01/0.02">$0.01 / $0.02</SelectItem>
+                <SelectItem value="0.02/0.05">$0.02 / $0.05</SelectItem>
+                <SelectItem value="0.05/0.10">$0.05 / $0.10</SelectItem>
+                <SelectItem value="0.10/0.20">$0.10 / $0.20</SelectItem>
+                <SelectItem value="0.25/0.50">$0.25 / $0.50</SelectItem>
+                <SelectItem value="0.50/1.00">$0.50 / $1.00</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <Button
+              type="submit"
+              className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={() => {
+                // Handle game creation logic here
+                setShowModal(false)
+              }}
+            >
               Create Game
-            </button>
-            <button
-              className="w-full h-12 bg-gray-500 text-white font-medium text-lg rounded-lg hover:bg-gray-600 transition duration-300"
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto border-gray-300 text-gray-800 hover:bg-gray-100"
               onClick={() => setShowModal(false)}
             >
               Cancel
-            </button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }
