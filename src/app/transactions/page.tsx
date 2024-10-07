@@ -1,15 +1,17 @@
 import React from "react";
-import CompletedCarousel from "./completedCarousel";
-import PendingCarousel from "./pendingCarousel";
+import CompletedCarousel from "@/app/components/transactions/completedCarousel";
+import PendingCarousel from "@/app/components/transactions/pendingCarousel";
 import { ChevronRight } from "lucide-react"
+import { Transaction } from "@/lib/types";
+
 
 const transactions: Transaction[] = Array.from({ length: 10 }, (_, i) => ({
-  id: i + 1,
-  byName: "By Name",
-  forName: "For Name",
+  transaction_id: (i + 1).toString(),
+  by_id: `by_id_${i}`,
+  for_id: `for_id_${i}`,
   amount: 5.0,
-  date: "1 1 2020",
-  avatarPath: `/images/avatars/${i}.png`,
+  created: "2020-01-01",
+  completed: "2020-01-02",
 }));
 
 export default function Transactions() {
@@ -45,12 +47,3 @@ export default function Transactions() {
     </div>
   );
 }
-
-type Transaction = {
-  id: number;
-  byName: string;
-  forName: string;
-  amount: number;
-  date: string;
-  avatarPath: string;
-};

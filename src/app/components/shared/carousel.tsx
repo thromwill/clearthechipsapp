@@ -13,22 +13,36 @@ type CarouselProps<T> = {
   slidesPerView?: number;
   spaceBetween?: number;
   centeredSlides?: boolean;
-  renderItem: (item: T, index: number, handleSlideClick: (index: number) => void, currentIndex: number) => ReactNode;
+  renderItem: (
+    item: T,
+    index: number,
+    handleSlideClick: (index: number) => void,
+    currentIndex: number
+  ) => ReactNode;
+  onCurrentIndexChange?: (index: number) => void;
 };
 
-export default function Carousel<T>({ items, slidesPerView = 3, spaceBetween = 20, centeredSlides = true, renderItem }: CarouselProps<T>) {
+export default function Carousel<T>({
+  items,
+  slidesPerView = 3,
+  spaceBetween = 20,
+  centeredSlides = true,
+  renderItem,
+  onCurrentIndexChange
+}: CarouselProps<T>) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swiperInstance, setSwiperInstance] = useState<SwiperType | null>(null);
 
   const handleSlideClick = (index: number) => {
     if (!swiperInstance) return;
+    swiperInstance.slideTo(index);
+  };
 
-    const numSlides = items.length;
-
-    if ((index - currentIndex + numSlides) % numSlides === 1) {
-      swiperInstance.slideNext();
-    } else {
-      swiperInstance.slidePrev();
+  const handleSlideChange = (swiper: SwiperType) => {
+    const newIndex = swiper.realIndex;
+    setCurrentIndex(newIndex);
+    if (onCurrentIndexChange) {
+      onCurrentIndexChange(newIndex);
     }
   };
 
@@ -41,7 +55,7 @@ export default function Carousel<T>({ items, slidesPerView = 3, spaceBetween = 2
         centeredSlides={centeredSlides}
         loop={true}
         onSwiper={setSwiperInstance}
-        onSlideChange={(swiper) => setCurrentIndex(swiper.realIndex)}
+        onSlideChange={handleSlideChange}
         pagination={{ clickable: true, el: '.swiper-pagination', bulletClass: 'custom-bullet', bulletActiveClass: 'custom-bullet-active' }}
       >
         {items.map((item, index) => (

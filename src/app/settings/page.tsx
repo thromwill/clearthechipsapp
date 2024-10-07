@@ -1,21 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Switch } from "@/components/ui/switch"
+import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { useTheme } from "next-themes";
 
 export default function Settings() {
-  const [notifications, setNotifications] = useState(true)
-  const [volume, setVolume] = useState(50)
-  const [theme, setTheme] = useState("dark")
+  const [notificationsAll, setNotificationsAll] = useState(true);
+  const [notificationsGame, setNotificationsGame] = useState(true);
+  const [notificationsResults, setNotificationsResults] = useState(true);
+  const [notificationsTransactions, setNotificationsTransactions] =
+    useState(true);
+  const [notificationsNews, setNotificationsNews] = useState(true);
+
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="min-h-screen overflow-auto container mx-auto max-w-2xl p-4 space-y-8">
@@ -23,44 +29,49 @@ export default function Settings() {
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Notifications</h2>
+
         <div className="flex items-center justify-between">
-          <Label htmlFor="notifications">Enable notifications</Label>
+          <Label htmlFor="notifications-all">Enable all notifications</Label>
           <Switch
-            id="notifications"
-            checked={notifications}
-            onCheckedChange={setNotifications}
+            id="notifications-all"
+            checked={notificationsAll}
+            onCheckedChange={setNotificationsAll}
           />
         </div>
+
         <div className="flex items-center justify-between">
-          <Label htmlFor="notifications">Enable notifications</Label>
+          <Label htmlFor="notifications-game">Game invitations</Label>
           <Switch
-            id="notifications"
-            checked={notifications}
-            onCheckedChange={setNotifications}
+            id="notifications-game"
+            checked={notificationsGame}
+            onCheckedChange={setNotificationsGame}
           />
         </div>
+
         <div className="flex items-center justify-between">
-          <Label htmlFor="notifications">Enable notifications</Label>
+          <Label htmlFor="notifications-results">Game results</Label>
           <Switch
-            id="notifications"
-            checked={notifications}
-            onCheckedChange={setNotifications}
+            id="notifications-results"
+            checked={notificationsResults}
+            onCheckedChange={setNotificationsResults}
           />
         </div>
+
         <div className="flex items-center justify-between">
-          <Label htmlFor="notifications">Enable notifications</Label>
+          <Label htmlFor="notifications-transactions">Transactions</Label>
           <Switch
-            id="notifications"
-            checked={notifications}
-            onCheckedChange={setNotifications}
+            id="notifications-transactions"
+            checked={notificationsTransactions}
+            onCheckedChange={setNotificationsTransactions}
           />
         </div>
+
         <div className="flex items-center justify-between">
-          <Label htmlFor="notifications">Enable notifications</Label>
+          <Label htmlFor="notifications-news">News and updates</Label>
           <Switch
-            id="notifications"
-            checked={notifications}
-            onCheckedChange={setNotifications}
+            id="notifications-news"
+            checked={notificationsNews}
+            onCheckedChange={setNotificationsNews}
           />
         </div>
       </div>
@@ -83,7 +94,6 @@ export default function Settings() {
           </Select>
         </div>
       </div>
-      
     </div>
-  )
+  );
 }
