@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useGlobalState } from "./GlobalStateProvider";
 import { generateUUID } from "@/lib/utils";
-import { getPlayerById } from "@/lib/api/player";
-import { createOrUpdatePlayer } from "@/lib/api/player";
+import { getPlayerById, createOrUpdatePlayer } from "@/lib/api/player";
+import { getPlaysByPlayerId } from "@/lib/api/plays";
 import { Player } from "@/lib/types";
 
 export default function InitializeUserData() {
@@ -13,37 +13,56 @@ export default function InitializeUserData() {
   const { setState, getState } = useGlobalState();
 
   useEffect(() => {
-    const checkAndCreatePlayer = async () => {
-      if (user && !getState("player_id")) {
+    const initializePlayerData = async () => {
+      // Proceed only if user is available and player_id is not set
+      if (!user){
+        console.error("No authenticated user");
+        return
+      }
+
+      if (!getState("player")) {
+        let player: Partial<Player>;
+
         try {
-          const player = await getPlayerById(user.id);
-          setState("player_id", player.player_id);
-          setState("org_id", player.org_id);
-          setState("first_name", player.first_name);
-          setState("last_name", player.last_name);
-          setState("email", player.email);
+          player = await getPlayerById(user.id);
+
+          // Set player data in the global state
+          setState("player", player);
         } catch (error) {
-          const playerData: Partial<Player> = {
+          console.error("Failed to fetch player data:", error);
+
+          // Create new player data if fetching fails
+          player = {
             player_id: generateUUID(),
             org_id: user.id,
-            first_name: user.firstName ?? "",
-            last_name: user.lastName ?? "",
-            email: user.primaryEmailAddress?.emailAddress ?? "",
+            first_name: user.firstName || "",
+            last_name: user.lastName || "",
+            email: user.primaryEmailAddress?.emailAddress || "",
           };
 
-          setState("player_id", playerData.player_id);
-          setState("org_id", playerData.org_id);
-          setState("first_name", playerData.first_name);
-          setState("last_name", playerData.last_name);
-          setState("email", playerData.email);
+          // Set new player data in the global state
+          setState("player", player);
 
-          await createOrUpdatePlayer(playerData);
+          // Persist new player data to the database
+          await createOrUpdatePlayer(player);
+        }
+
+        // Check if the player is currently playing a game after player data is set
+        const plays = await getPlaysByPlayerId(player.player_id!);
+
+        const currentlyPlaying = plays.some(play => play.is_currently_playing);
+
+        if (!currentlyPlaying) {
+          // If not currently playing, set these states to null
+          setState("currentGame", null);
+          setState("currentPlays", null);
+          setState("currentGameJoinCode", null);
         }
       }
     };
 
-    checkAndCreatePlayer();
-  }, [user, setState, getState]);
+    initializePlayerData();
+  }, [user]);
 
   return null; // This component doesn't render anything
 }

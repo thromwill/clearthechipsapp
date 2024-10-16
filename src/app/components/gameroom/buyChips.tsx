@@ -15,21 +15,59 @@ import {
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { createOrUpdatePlay, getPlaysByGameId } from '@/lib/api/plays';
+import { updatePlayerInGame } from '@/lib/api/game';
+import { useGlobalState } from "@/app/components/GlobalStateProvider";
 
 export default function BuyChips() {
   const [enteredAmount, setEnteredAmount] = useState<string>("");
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const { getState } = useGlobalState();
 
-  const handleBuyChipsEnter = () => {
+  const handleBuyChipsEnter = async () => {
     const amount = parseInt(enteredAmount, 10);
     if (amount >= 1 && amount <= 10000) {
-      setEnteredAmount("");
-      setOpen(false);
-      toast({
-        title: "Success",
-        description: `You've bought in for $${amount}.`,
-      });
+      try {
+        const player = getState("player");
+        if (!player) {
+          throw new Error("Player not found");
+        }
+
+        const currentGame = getState("currentGame");
+        const gameId = currentGame.game_id;
+
+        // Get the current play data
+        const plays = await getPlaysByGameId(gameId);
+        const currentPlay = plays.find(play => play.player_id === player.player_id);
+
+        // Calculate the new buyin amount
+        const totalBuyin = (currentPlay?.buyin || 0) + amount;
+
+        await createOrUpdatePlay({
+          player_id: player.player_id,
+          game_id: gameId,
+          buyin: totalBuyin,
+          is_cashed_out: false
+        });
+
+        // Update the player in the game and add the message
+        await updatePlayerInGame(gameId, player.player_id, { buyin: totalBuyin }, amount);
+
+        setEnteredAmount("");
+        setOpen(false);
+        toast({
+          title: "Success",
+          description: `You've purchased $${amount} in chips.`,
+        });
+      } catch (error) {
+        console.error("Error buying chips:", error);
+        toast({
+          title: "Error",
+          description: "Failed to buy chips. Please try again.",
+          variant: "destructive",
+        });
+      }
     } else {
       toast({
         title: "Error",

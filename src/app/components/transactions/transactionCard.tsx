@@ -19,16 +19,14 @@ export default function TransactionCard({
 
   return (
     <div
-      className={cn(
-        "flex flex-col bg-white w-60 h-80 rounded-lg p-4 transition-all duration-300 ease-in-out",
-        "border-2",
+      className={`flex flex-col bg-white w-60 h-80 rounded-lg p-4 transition-all duration-300 ease-in-out
+      border-2 ${
         isSelected
           ? "border-blue-500 ring-2 ring-blue-300"
           : isHovered
           ? "border-gray-200"
-          : "border-gray-100",
-        "cursor-pointer"
-      )}
+          : "border-gray-100"
+      } cursor-pointer`}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -60,7 +58,11 @@ export default function TransactionCard({
       </div>
       <div className="mt-4 w-full">
         <div className="text-sm text-gray-600">from</div>
-        <div className="font-semibold truncate">{transaction.by_id}</div>
+        <div className="font-semibold truncate">
+          {transaction.by?.first_name && transaction.by?.last_name
+            ? `${transaction.by.first_name} ${transaction.by.last_name}`
+            : transaction.by_id}
+        </div>
       </div>
       <div className="flex justify-between items-center mt-auto w-full">
         <div className="text-sm text-gray-500">{transaction.created}</div>

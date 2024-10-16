@@ -1,6 +1,14 @@
-import { query, insert, update, remove, upsert, subscribeToTable } from '@/lib/api/supabase/database';
+import { query, insert, update, subscribeToTable } from '@/lib/api/supabase/database';
 import { Game, Play, Player } from '@/lib/types';
-import { generateUUID, getCurrentTimestamp } from '@/lib/utils';
+import { generateUUID, generateJoinCode, getCurrentTimestamp } from '@/lib/utils';
+
+interface GameMessage {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  timestamp: number;
+  content: string;
+}
 
 export const getGameById = async (gameId: string): Promise<Game> => {
   const [game] = await query<Game>('GAME', { eq: ['game_id', gameId] });
@@ -21,15 +29,32 @@ export const createGame = async (gameData: Partial<Game>): Promise<Game> => {
   const newGame: Partial<Game> = {
     ...gameData,
     game_id: generateUUID(),
-    join_code: generateUUID().substring(0, 6).toUpperCase(),
+    join_code: generateJoinCode(),
     created: getCurrentTimestamp(),
-    completed: undefined
+    messages: JSON.stringify([]),
   };
   return await insert<Game>('GAME', newGame);
 };
 
 export const updateGame = async (gameId: string, gameData: Partial<Game>): Promise<Game> => {
   return await update<Game>('GAME', 'game_id', gameId, gameData);
+};
+
+const createGameMessage = (player: Player, action: string): GameMessage => {
+  return {
+    user_id: player.player_id,
+    first_name: player.first_name || '',
+    last_name: player.last_name || '',
+    timestamp: Date.now(),
+    content: `${player.first_name} ${action}`
+  };
+};
+
+const addMessageToGame = async (gameId: string, message: GameMessage): Promise<void> => {
+  const game = await getGameById(gameId);
+  const messages = JSON.parse(game.messages || '[]');
+  messages.push(message);
+  await updateGame(gameId, { messages: JSON.stringify(messages) });
 };
 
 export const getPlayersInGame = async (gameId: string): Promise<Play[]> => {
@@ -42,18 +67,33 @@ export const addPlayerToGame = async (gameId: string, player: Player): Promise<v
     game_id: gameId,
     buyin: 0,
     cashout: 0,
-    currently_playing: true,
+    is_currently_playing: true,
     is_cashed_out: false
   };
   await insert<Play>('PLAYS', newPlay);
+  await addMessageToGame(gameId, createGameMessage(player, "joined the game!"));
 };
 
 export const removePlayerFromGame = async (gameId: string, playerId: string): Promise<void> => {
-  await remove('PLAYS', 'player_id', playerId);
+  await update<Play>('PLAYS', 'player_id', playerId, { 
+    is_currently_playing: false,
+    game_id: gameId
+  });
+  const [player] = await query<Player>('PLAYER', { eq: ['player_id', playerId] });
+  await addMessageToGame(gameId, createGameMessage(player, "left the game."));
 };
 
-export const updatePlayerInGame = async (gameId: string, playerId: string, playData: Partial<Play>): Promise<void> => {
+export const updatePlayerInGame = async (gameId: string, playerId: string, playData: Partial<Play>, newAmount?: number): Promise<void> => {
   await update<Play>('PLAYS', 'player_id', playerId, playData);
+  const [player] = await query<Player>('PLAYER', { eq: ['player_id', playerId] });
+  
+  
+  if (newAmount !== undefined && playData.buyin !== undefined) {
+    await addMessageToGame(gameId, createGameMessage(player, `purchased $${newAmount.toFixed(2)} in chips`));
+  }
+  if (newAmount !== undefined && playData.cashout !== undefined) {
+    await addMessageToGame(gameId, createGameMessage(player, `cashed out for $${newAmount.toFixed(2)}`));
+  }
 };
 
 export const completeGame = async (gameId: string): Promise<void> => {
@@ -62,14 +102,6 @@ export const completeGame = async (gameId: string): Promise<void> => {
 
 export const subscribeToGame = (gameId: string, callback: (payload: any) => void) => {
   return subscribeToTable('GAME', (payload) => {
-    if (payload.new.game_id === gameId) {
-      callback(payload);
-    }
-  });
-};
-
-export const subscribeToPlays = (gameId: string, callback: (payload: any) => void) => {
-  return subscribeToTable('PLAYS', (payload) => {
     if (payload.new.game_id === gameId) {
       callback(payload);
     }

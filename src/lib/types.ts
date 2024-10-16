@@ -28,16 +28,21 @@ export interface Game {
   big_blind?: number;
   created?: string;
   completed?: string;
+  chip_values?: any;
+  messages?: any;
 }
 
 export interface Play {
+  PLAYER?: Player;
   player_id: string;
   game_id: string;
   join_code?: string;
   buyin?: number;
   cashout?: number;
-  currently_playing?: boolean;
+  is_currently_playing?: boolean;
   is_cashed_out?: boolean;
+  new_buyin?: number;
+  new_cashout?: number;
 }
 
 export interface Transaction {
@@ -47,4 +52,6 @@ export interface Transaction {
   amount: number;
   created?: string;
   completed?: string;
+  by?: { first_name: string; last_name: string };
+  for?: { first_name: string; last_name: string };
 }

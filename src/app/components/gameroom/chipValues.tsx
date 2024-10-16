@@ -10,7 +10,7 @@ interface Chip {
 
 interface ChipValuesModalProps {
   onClose: () => void;
-  chipValues: Record<string, number>; // More concise typing for objects
+  chipValues: Record<string, number>;
 }
 
 interface ChipValuesProps {

@@ -7,18 +7,18 @@ import {
   SignedOut,
   RedirectToSignIn,
 } from "@clerk/nextjs";
-import Navigation from "./components/shared/navigation";
 import Header from "./components/shared/header";
 import Footer from "./components/shared/footer";
 import { ThemeProvider } from "./components/theme-provider";
 import { GlobalStateProvider } from "./components/GlobalStateProvider";
 import InitializeUserData from "@/app/components/initializeUserData";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Clear The Chips - Online Poker",
-  description: "Join or create poker games with friends and play online.",
+  title: "Clear The Chips",
+  description: "Easily manage your home poker game.",
 };
 
 function AuthenticatedApp({ children }: { children: React.ReactNode }) {
@@ -37,9 +37,9 @@ function AuthenticatedApp({ children }: { children: React.ReactNode }) {
             <main className="min-h-screen flex-grow">
               <div className="container mx-auto px-4 py-8">{children}</div>
             </main>
-            {/* <Navigation />
-            <Footer /> */}
+            <Footer />
           </ThemeProvider>
+          <Toaster />
         </body>
       </html>
     </GlobalStateProvider>

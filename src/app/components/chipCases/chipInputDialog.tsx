@@ -1,27 +1,28 @@
-"use client"
-// TODO: disallow duplicate color names -> json only gets 1
-import React, { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { PlusCircle, X, Camera } from "lucide-react"
-import { ChipCase } from "@/lib/types"
-import { useToast } from "@/hooks/use-toast"
-import { useGlobalState } from "@/app/components/GlobalStateProvider"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { PlusCircle, X, Camera } from "lucide-react";
+import { ChipCase } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { useGlobalState } from "@/app/components/GlobalStateProvider";
+import { getChipCaseById } from "@/lib/api/chipCase";
 
 interface ChipInputDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  mode: "add" | "edit" | "cashout"
-  chipCase: ChipCase | null
-  onSubmit: (chips: { [color: string]: number }, caseName: string) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "add" | "edit" | "cashout";
+  chipCase: ChipCase | null;
+  onSubmit: (chips: { [color: string]: number }, caseName: string) => void;
 }
 
 export default function ChipInputDialog({
@@ -31,88 +32,113 @@ export default function ChipInputDialog({
   chipCase,
   onSubmit,
 }: ChipInputDialogProps) {
-  const { getState } = useGlobalState()
-  const player_id = getState("player_id")
-  
-  const [chipInputs, setChipInputs] = useState([
+  const { getState } = useGlobalState();
+  const game = getState("currentGame");
+
+  const [chipInputs, setChipInputs] = useState<
+    { color: string; quantity: string }[]
+  >([
     { color: "", quantity: "" },
     { color: "", quantity: "" },
     { color: "", quantity: "" },
-  ])
-  const [caseName, setCaseName] = useState("")
-  const { toast } = useToast()
+  ]);
+  const [caseName, setCaseName] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (mode === "edit" && chipCase) {
-      setCaseName(chipCase.case_name || "")
-      if (chipCase.chips) {
-        const chipEntries = Object.entries(chipCase.chips)
-        console.log(chipEntries)
-        setChipInputs(
-          chipEntries.map(([color, quantity]) => ({
-            color,
-            quantity: quantity.toString(),
-          }))
-        )
+    const fetchChipCase = async () => {
+      if (mode === "edit" && chipCase) {
+        setCaseName(chipCase.case_name || "");
+        if (chipCase.chips) {
+          const chipEntries = Object.entries(chipCase.chips);
+          setChipInputs(
+            chipEntries.map(([color, quantity]) => ({
+              color,
+              quantity: (quantity as number).toString(),
+            }))
+          );
+        }
+      } else if (mode === "add") {
+        setCaseName("");
+        setChipInputs([
+          { color: "", quantity: "" },
+          { color: "", quantity: "" },
+          { color: "", quantity: "" },
+        ]);
+      } else if (mode === "cashout" && game?.case_id) {
+        try {
+          const gameChipCase = await getChipCaseById(game.case_id);
+          if (gameChipCase.chips) {
+            const chipEntries = Object.entries(gameChipCase.chips);
+            setChipInputs(
+              chipEntries.map(([color]) => ({
+                color,
+                quantity: "0",
+              }))
+            );
+          }
+        } catch (error) {
+          console.error("Failed to fetch game chip case:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load game chip data.",
+            variant: "destructive",
+          });
+        }
       }
-    } else if (mode === "add") {
-      setCaseName("")
-      setChipInputs([
-        { color: "", quantity: "" },
-        { color: "", quantity: "" },
-        { color: "", quantity: "" },
-      ])
-    }
-  }, [mode, chipCase, open])
+    };
+
+    fetchChipCase();
+  }, [mode, chipCase, open, game?.case_id]);
 
   const handleAddChipInput = () => {
     if (chipInputs.length < 6) {
-      setChipInputs([...chipInputs, { color: "", quantity: "" }])
+      setChipInputs([...chipInputs, { color: "", quantity: "" }]);
     }
-  }
+  };
 
   const handleColorChange = (index: number, value: string) => {
-    const updatedInputs = [...chipInputs]
-    updatedInputs[index].color = value
-    setChipInputs(updatedInputs)
-  }
+    const updatedInputs = [...chipInputs];
+    updatedInputs[index].color = value;
+    setChipInputs(updatedInputs);
+  };
 
   const handleQuantityChange = (index: number, value: string) => {
-    const updatedInputs = [...chipInputs]
-    updatedInputs[index].quantity = value
-    setChipInputs(updatedInputs)
-  }
+    const updatedInputs = [...chipInputs];
+    updatedInputs[index].quantity = value;
+    setChipInputs(updatedInputs);
+  };
 
   const handleRemoveChipInput = (index: number) => {
     if (chipInputs.length > 1) {
-      setChipInputs(chipInputs.filter((_, i) => i !== index))
+      setChipInputs(chipInputs.filter((_, i) => i !== index));
     }
-  }
+  };
 
   const handleSubmit = () => {
-    const chips: { [color: string]: number } = {}
+    const chips: { [color: string]: number } = {};
     chipInputs.forEach((input) => {
       if (input.color && input.quantity) {
-        chips[input.color] = parseInt(input.quantity, 10)
+        chips[input.color] = parseInt(input.quantity, 10);
       }
-    })
+    });
 
-    onSubmit(chips, caseName)
-    onOpenChange(false)
-  }
+    onSubmit(chips, caseName);
+    onOpenChange(false);
+  };
 
   const getDialogTitle = () => {
     switch (mode) {
       case "add":
-        return "Add Chip Case"
+        return "Add Chip Case";
       case "edit":
-        return "Edit Chip Case"
+        return "Edit Chip Case";
       case "cashout":
-        return "Cash Out"
+        return "Cash Out";
       default:
-        return "Chip Input"
+        return "Chip Input";
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -138,11 +164,6 @@ export default function ChipInputDialog({
             Scan Chips
           </Button>
 
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="picture">Or upload your own image</Label>
-            <Input id="picture" type="file" accept="image/*" disabled />
-          </div>
-
           <div className="grid gap-2">
             <Label>Or enter manually</Label>
             {chipInputs.map((input, index) => (
@@ -153,6 +174,7 @@ export default function ChipInputDialog({
                   value={input.color}
                   onChange={(e) => handleColorChange(index, e.target.value)}
                   className="w-full"
+                  disabled={mode === "cashout"}
                 />
                 <Input
                   type="number"
@@ -161,17 +183,19 @@ export default function ChipInputDialog({
                   onChange={(e) => handleQuantityChange(index, e.target.value)}
                   className="w-full"
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveChipInput(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                {mode !== "cashout" && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveChipInput(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             ))}
-            {chipInputs.length < 6 && (
+            {mode !== "cashout" && chipInputs.length < 6 && (
               <Button
                 type="button"
                 onClick={handleAddChipInput}
@@ -186,7 +210,11 @@ export default function ChipInputDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
           <Button type="submit" onClick={handleSubmit}>
@@ -195,5 +223,5 @@ export default function ChipInputDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

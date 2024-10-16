@@ -47,16 +47,21 @@ export default function Carousel<T>({
   };
 
   return (
-    <div className="w-full max-w-sm my-4 relative">
+    <div className="w-full relative">
       <Swiper
         modules={[Navigation, Pagination]}
         spaceBetween={spaceBetween}
         slidesPerView={slidesPerView}
         centeredSlides={centeredSlides}
-        loop={true}
+        loop={items.length > 2}
         onSwiper={setSwiperInstance}
         onSlideChange={handleSlideChange}
-        pagination={{ clickable: true, el: '.swiper-pagination', bulletClass: 'custom-bullet', bulletActiveClass: 'custom-bullet-active' }}
+        pagination={{ 
+          clickable: true, 
+          el: '.swiper-pagination', 
+          bulletClass: 'inline-block w-2 h-2 bg-gray-300 rounded-full mx-1 transition-all duration-300', 
+          bulletActiveClass: 'w-4 bg-primary'
+        }}
       >
         {items.map((item, index) => (
           <SwiperSlide key={index}>
@@ -65,9 +70,11 @@ export default function Carousel<T>({
         ))}
       </Swiper>
 
-      <div className="flex justify-center items-center mt-8">
-        <div className="swiper-pagination flex justify-center"></div>
-      </div>
+      {items.length > 1 && (
+        <div className="flex justify-center items-center mt-4">
+          <div className="swiper-pagination flex justify-center"></div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,13 +4,6 @@ import React, { useState, useEffect } from "react";
 import ChipCaseCarousel from "@/app/components/chipCases/chipCaseCarousel";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
   getChipCasesByPlayerId,
   createOrUpdateChipCase,
   removeChipCase,
@@ -20,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGlobalState } from "@/app/components/GlobalStateProvider";
 import ChipInputDialog from "@/app/components/chipCases/chipInputDialog";
 import { generateUUID } from "@/lib/utils";
-import { PlusCircle, Edit, Trash2 } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 
 interface ChipCasesProps {
   onSelect?: (caseId: string) => void;
@@ -29,24 +22,32 @@ interface ChipCasesProps {
 export default function ChipCases({ onSelect }: ChipCasesProps) {
   const { getState } = useGlobalState();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [chipInputDialogOpen, setChipInputDialogOpen] = useState(false);
   const [chipCases, setChipCases] = useState<ChipCase[]>([]);
   const [currentCase, setCurrentCase] = useState<ChipCase | null>(null);
   const [chipInputMode, setChipInputMode] = useState<"add" | "edit">("add");
   const { toast } = useToast();
 
-  const player_id = getState("player_id");
-  
+  const player = getState("player");
+
   useEffect(() => {
-    if (player_id) {
+    if (player.player_id) {
       fetchChipCases();
     }
-  }, [player_id]); 
+  }, [player.player_id]);
+
+  useEffect(() => {
+    // Whenever the index changes, call onSelect with the current chip case ID
+    if (onSelect && chipCases.length > 0) {
+      setCurrentCase(chipCases[currentIndex])
+      onSelect(chipCases[currentIndex].case_id);
+    }
+
+  }, [currentIndex, chipCases, onSelect]);
 
   const fetchChipCases = async () => {
     try {
-      const cases = await getChipCasesByPlayerId(player_id);
+      const cases = await getChipCasesByPlayerId(player.player_id);
       setChipCases(cases);
     } catch (error) {
       console.error("Failed to fetch chip cases:", error);
@@ -72,49 +73,56 @@ export default function ChipCases({ onSelect }: ChipCasesProps) {
     }
   };
 
-  const handleEditChipCase = () => {
-    const chipCase = chipCases[currentIndex];
+  const handleEditChipCase = (chipCase: ChipCase) => {
     setCurrentCase(chipCase);
     setChipInputMode("edit");
     setChipInputDialogOpen(true);
   };
 
-  const handleChipInputSubmit = async (chips: { [color: string]: number }, caseName: string) => {
+  const handleChipInputSubmit = async (
+    chips: { [color: string]: number },
+    caseName: string
+  ) => {
     try {
       const updatedCase = await createOrUpdateChipCase({
         case_id: currentCase?.case_id || generateUUID(),
-        player_id: player_id,
+        player_id: player.player_id,
         case_name: caseName,
         chips: chips,
       });
 
       if (currentCase) {
-        setChipCases(chipCases.map(c => c.case_id === updatedCase.case_id ? updatedCase : c));
+        setChipCases(
+          chipCases.map((c) =>
+            c.case_id === updatedCase.case_id ? updatedCase : c
+          )
+        );
       } else {
         setChipCases([...chipCases, updatedCase]);
       }
 
       toast({
         title: "Success",
-        description: `Chip case ${currentCase ? "updated" : "added"} successfully.`,
+        description: `Chip case ${
+          currentCase ? "updated" : "added"
+        } successfully.`,
       });
     } catch (error) {
       console.error("Failed to save chip case:", error);
       toast({
         title: "Error",
-        description: `Failed to ${currentCase ? "update" : "add"} chip case. Please try again.`,
+        description: `Failed to ${
+          currentCase ? "update" : "add"
+        } chip case. Please try again.`,
         variant: "destructive",
       });
     }
   };
 
-  const handleRemoveChipCase = async () => {
-    const chipCase = chipCases[currentIndex];
-    if (!chipCase) return;
-
+  const handleRemoveChipCase = async (chipCase: ChipCase) => {
     try {
       await removeChipCase(chipCase.case_id);
-      setChipCases(chipCases.filter((_, i) => i !== currentIndex));
+      setChipCases(chipCases.filter((c) => c.case_id !== chipCase.case_id));
       toast({
         title: "Success",
         description: "Chip case removed successfully.",
@@ -129,72 +137,27 @@ export default function ChipCases({ onSelect }: ChipCasesProps) {
     }
   };
 
-  const handleSelectCase = () => {
-    if (onSelect && chipCases[currentIndex]) {
-      onSelect(chipCases[currentIndex].case_id);
-    }
-  };
-
   return (
-    <div className="flex flex-col items-center">
-      {!onSelect && (
+    <div className="flex flex-col items-center w-full max-w-full mx-auto p-4">
+      <div className="w-full overflow-y-auto">
+        <ChipCaseCarousel
+          chipCases={chipCases}
+          onCurrentIndexChange={setCurrentIndex}
+          onEditChipCase={handleEditChipCase}
+          onDeleteChipCase={handleRemoveChipCase}
+        />
+      </div>
+      <div className="flex w-full items-center">
         <Button
-          onClick={() => setDialogOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          onClick={handleAddChipCase}
+          variant="outline"
+          size="sm"
+          className="text-black hover:bg-primary/10"
         >
-          Manage Chip Cases
+          <PlusCircle className="w-4 h-4 mr-2" />
+          Add Case
         </Button>
-      )}
-
-      <Dialog open={dialogOpen || !!onSelect} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-semibold">
-              {onSelect ? "Select Chip Case" : "Your Chip Cases"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-6">
-            <ChipCaseCarousel 
-              chipCases={chipCases}
-              onCurrentIndexChange={setCurrentIndex}
-            />
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex flex-wrap justify-center sm:justify-start gap-2">
-              <Button
-                onClick={handleAddChipCase}
-                className="bg-green-500 hover:bg-green-600 text-white"
-              >
-                <PlusCircle className="w-4 h-4 mr-2" />
-                New Case
-              </Button>
-              <Button
-                onClick={handleEditChipCase}
-                variant="outline"
-                className="border-blue-500 text-blue-500 hover:bg-blue-50"
-                disabled={chipCases.length === 0}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-              <Button
-                onClick={handleRemoveChipCase}
-                variant="outline"
-                className="border-red-500 text-red-500 hover:bg-red-50"
-                disabled={chipCases.length === 0}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Remove
-              </Button>
-            </div>
-            {onSelect && (
-              <Button onClick={handleSelectCase} disabled={chipCases.length === 0}>
-                Select Case
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </div>
 
       <ChipInputDialog
         open={chipInputDialogOpen}

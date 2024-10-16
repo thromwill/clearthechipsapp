@@ -11,7 +11,7 @@ export const joinGame = async (playerId: string, joinCode: string) => {
     player_id: playerId,
     game_id: game.game_id,
     join_code: joinCode,
-    currently_playing: true,
+    is_currently_playing: true,
     is_cashed_out: false,
   };
 

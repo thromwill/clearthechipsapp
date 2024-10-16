@@ -1,43 +1,39 @@
-"use client"
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import { useEffect, useState } from 'react';
-import { Button } from "@/components/ui/button"
-import { Bell, Menu } from "lucide-react"
-import Logo from '@/public/images/logo.png'
+import { Button } from "@/components/ui/button";
+import { Bell, Menu } from "lucide-react";
+import Logo from "@/public/images/logo.png";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/ui/sheet";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
+import GameNavigation from "@/app/components/shared/gameNavigation";
+import { useTheme } from "next-themes";
 
 export default function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const { theme } = useTheme();
 
   const closeMenu = () => {
     setIsOpen(false);
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full transition-all duration-300 bg-white backdrop-blur-md shadow-md`}>
+    <header
+      className={`sticky top-0 z-50 w-full transition-all duration-300 bg-background/80 backdrop-blur-md border-b`}
+    >
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -53,39 +49,78 @@ export default function Header() {
               </SheetHeader>
               <nav className="mt-6">
                 <ul className="space-y-4">
-                  <li><NavLink href="/" onClick={closeMenu}>Home</NavLink></li>
-                  <li><NavLink href="/profile" onClick={closeMenu}>Profile</NavLink></li>
-                  <li><NavLink href="/transactions" onClick={closeMenu}>Transactions</NavLink></li>
-                  <li><NavLink href="/settings" onClick={closeMenu}>Settings</NavLink></li>
+                  <li>
+                    <GameNavigation onNavigate={closeMenu} />
+                  </li>
+                  <li>
+                    <NavLink href="/profile" onClick={closeMenu}>
+                      Profile
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink href="/transactions" onClick={closeMenu}>
+                      Transactions
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink href="/settings" onClick={closeMenu}>
+                      Settings
+                    </NavLink>
+                  </li>
                 </ul>
               </nav>
             </SheetContent>
           </Sheet>
           <Link href="/" className="flex items-center space-x-2">
             <Image src={Logo} alt="Clear The Chips" width={28} height={28} />
-            <span className="text-xl font-semibold text-gray-800 hidden sm:inline">Clear The Chips</span>
+            <span className="text-xl font-semibold text-foreground hidden sm:inline">
+              Clear The Chips
+            </span>
           </Link>
         </div>
         <nav className="hidden md:block">
           <ul className="flex space-x-6">
-            <li><NavLink href="/">Home</NavLink></li>
-            <li><NavLink href="/profile">Profile</NavLink></li>
-            <li><NavLink href="/transactions">Transactions</NavLink></li>
-            <li><NavLink href="/settings">Settings</NavLink></li>
+            <li>
+              <GameNavigation onNavigate={closeMenu} />
+            </li>
+            <li>
+              <NavLink href="/profile">Profile</NavLink>
+            </li>
+            <li>
+              <NavLink href="/transactions">Transactions</NavLink>
+            </li>
+            <li>
+              <NavLink href="/settings">Settings</NavLink>
+            </li>
           </ul>
         </nav>
         <div className="flex items-center space-x-4">
           <NotificationBell count={3} />
-          <UserButton afterSignOutUrl="/" />
+          <UserButton />
         </div>
       </div>
     </header>
   );
 }
 
-function NavLink({ href, children, className = '', onClick }: { href: string; children: React.ReactNode; className?: string; onClick?: () => void }) {
+// NavLink component for consistent styling
+function NavLink({
+  href,
+  children,
+  className = "",
+  onClick,
+}: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
-    <Link href={href} className={`text-gray-600 hover:text-gray-900 transition-colors ${className}`} onClick={onClick}>
+    <Link
+      href={href}
+      className={`text-muted-foreground hover:text-foreground transition-colors ${className}`}
+      onClick={onClick}
+    >
       {children}
     </Link>
   );
@@ -96,9 +131,9 @@ function NotificationBell({ count }: { count: number }) {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-gray-600" />
+          <Bell className="h-5 w-5 text-muted-foreground" />
           {count > 0 && (
-            <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+            <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-destructive text-destructive-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
               {count}
             </span>
           )}
@@ -109,7 +144,9 @@ function NotificationBell({ count }: { count: number }) {
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="font-medium leading-none">Notifications</h4>
-            <p className="text-sm text-muted-foreground">You have {count} unread notifications.</p>
+            <p className="text-sm text-muted-foreground">
+              You have {count} unread notifications.
+            </p>
           </div>
           <div className="grid gap-2">
             <div className="flex items-center space-x-2">
@@ -122,11 +159,13 @@ function NotificationBell({ count }: { count: number }) {
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-              <p className="text-sm">Reminder: Upcoming tournament this weekend</p>
+              <p className="text-sm">
+                Reminder: Upcoming tournament this weekend
+              </p>
             </div>
           </div>
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
