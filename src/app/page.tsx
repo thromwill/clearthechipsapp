@@ -24,20 +24,20 @@ export default function Home() {
 
   // Redirect user to gameroom if they are in a game
   useEffect(() => {
-    const currentGameJoinCode = getState("currentGameJoinCode");
+    const context_game = getState("context_game");
     
-    if (currentGameJoinCode) {
-      router.push(`/gameroom/${currentGameJoinCode}`);
+    if (context_game) {
+      router.push(`/gameroom/${context_game}`);
     }
   }, [getState]);
   
   const handleJoinGame = async () => {
     try {
       const game = await getGameByJoinCode(gamePin);
-      const player = getState("player")
+      const context_player = getState("context_player")
   
       // Check if player is authenticated
-      if (!player) {
+      if (!context_player ) {
         toast({
           title: "Error",
           description: "User not authenticated.",
@@ -45,9 +45,19 @@ export default function Home() {
         });
         return;
       }
+
+      const currentGame = getState("currentGame")
+      if (currentGame) {
+        toast({
+          title: "Error",
+          description: "You are already in a game. Please exit your game before creating a new one.",
+          variant: "destructive",
+        });
+        return;
+      }
   
       const players = await getPlayersInGame(game.game_id);
-      const existingPlayer = players.find((p) => p.player_id === player.player_id);
+      const existingPlayer = players.find((p) => p.player_id === context_player .player_id);
   
       // Check if game is full
       if (players.length >= 10 && !existingPlayer) {
@@ -67,17 +77,17 @@ export default function Home() {
             description: "You're already in this game.",
           });
         } else {
-          await updatePlayerInGame(game.game_id, player.player_id, {
+          await updatePlayerInGame(game.game_id, context_player .player_id, {
             is_currently_playing: true,
           });
         }
       } else {
         // Add new player to the game
         await addPlayerToGame(game.game_id, {
-          player_id: player.player_id,
-          org_id: getState("org_id") || "",
-          first_name: getState("first_name") || "",
-          last_name: getState("last_name") || "",
+          player_id: context_player .player_id,
+          org_id: getState("conext_org_id") || "",
+          first_name: getState("context_first_name") || "",
+          last_name: getState("context_last_name") || "",
           avatar_id: "",
         });
       }
@@ -124,7 +134,7 @@ export default function Home() {
               placeholder="Enter Game Pin"
               value={gamePin}
               onChange={handleGamePinInputChange}
-              className="h-16 text-center text-lg"
+              className="input-transparent-caret h-16 text-center text-lg"
               maxLength={5}
             />
             <Button className="w-full" onClick={handleJoinGame}>

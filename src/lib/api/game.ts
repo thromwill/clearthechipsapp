@@ -40,7 +40,7 @@ export const updateGame = async (gameId: string, gameData: Partial<Game>): Promi
   return await update<Game>('GAME', 'game_id', gameId, gameData);
 };
 
-const createGameMessage = (player: Player, action: string): GameMessage => {
+export const createGameMessage = (player: Player, action: string): GameMessage => {
   return {
     user_id: player.player_id,
     first_name: player.first_name || '',
@@ -50,7 +50,7 @@ const createGameMessage = (player: Player, action: string): GameMessage => {
   };
 };
 
-const addMessageToGame = async (gameId: string, message: GameMessage): Promise<void> => {
+export const addMessageToGame = async (gameId: string, message: GameMessage): Promise<void> => {
   const game = await getGameById(gameId);
   const messages = JSON.parse(game.messages || '[]');
   messages.push(message);
@@ -81,19 +81,6 @@ export const removePlayerFromGame = async (gameId: string, playerId: string): Pr
   });
   const [player] = await query<Player>('PLAYER', { eq: ['player_id', playerId] });
   await addMessageToGame(gameId, createGameMessage(player, "left the game."));
-};
-
-export const updatePlayerInGame = async (gameId: string, playerId: string, playData: Partial<Play>, newAmount?: number): Promise<void> => {
-  await update<Play>('PLAYS', 'player_id', playerId, playData);
-  const [player] = await query<Player>('PLAYER', { eq: ['player_id', playerId] });
-  
-  
-  if (newAmount !== undefined && playData.buyin !== undefined) {
-    await addMessageToGame(gameId, createGameMessage(player, `purchased $${newAmount.toFixed(2)} in chips`));
-  }
-  if (newAmount !== undefined && playData.cashout !== undefined) {
-    await addMessageToGame(gameId, createGameMessage(player, `cashed out for $${newAmount.toFixed(2)}`));
-  }
 };
 
 export const completeGame = async (gameId: string): Promise<void> => {

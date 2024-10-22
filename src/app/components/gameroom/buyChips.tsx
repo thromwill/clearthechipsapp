@@ -15,71 +15,80 @@ import {
 import { Label } from "@/components/ui/label";
 import { ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { createOrUpdatePlay, getPlaysByGameId } from '@/lib/api/plays';
-import { updatePlayerInGame } from '@/lib/api/game';
+import { createOrUpdatePlay } from '@/lib/api/plays';
 import { useGlobalState } from "@/app/components/GlobalStateProvider";
+
+const MAX_BUY_IN = 10000;
 
 export default function BuyChips() {
   const [enteredAmount, setEnteredAmount] = useState<string>("");
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { getState } = useGlobalState();
 
   const handleBuyChipsEnter = async () => {
     const amount = parseInt(enteredAmount, 10);
-    if (amount >= 1 && amount <= 10000) {
-      try {
-        const player = getState("player");
-        if (!player) {
-          throw new Error("Player not found");
-        }
 
-        const currentGame = getState("currentGame");
-        const gameId = currentGame.game_id;
-
-        // Get the current play data
-        const plays = await getPlaysByGameId(gameId);
-        const currentPlay = plays.find(play => play.player_id === player.player_id);
-
-        // Calculate the new buyin amount
-        const totalBuyin = (currentPlay?.buyin || 0) + amount;
-
-        await createOrUpdatePlay({
-          player_id: player.player_id,
-          game_id: gameId,
-          buyin: totalBuyin,
-          is_cashed_out: false
-        });
-
-        // Update the player in the game and add the message
-        await updatePlayerInGame(gameId, player.player_id, { buyin: totalBuyin }, amount);
-
-        setEnteredAmount("");
-        setOpen(false);
-        toast({
-          title: "Success",
-          description: `You've purchased $${amount} in chips.`,
-        });
-      } catch (error) {
-        console.error("Error buying chips:", error);
-        toast({
-          title: "Error",
-          description: "Failed to buy chips. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } else {
+    if (isNaN(amount) || amount <= 0 || amount > MAX_BUY_IN) {
       toast({
-        title: "Error",
-        description: "Please enter a valid amount between $1 and $10,000.",
+        title: "Invalid Amount",
+        description: `Please enter a valid amount between $1 and $${MAX_BUY_IN}.`,
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const context_player = getState("context_player");
+      const context_game = getState("context_game");
+      const context_plays = getState("context_plays");
+
+      if (!context_player || !context_game || !context_plays) {
+        throw new Error("Required context not found");
+      }
+
+      const currentPlay = context_plays.find(play => play.player_id === context_player.player_id);
+
+      if (!currentPlay || !currentPlay.is_currently_playing) {
+        throw new Error("Player is not currently in the game");
+      }
+
+      const newTotalBuyin = (currentPlay.buyin || 0) + amount;
+      const newCurrentBuyin = (currentPlay.current_buyin || 0) + amount;
+
+      await createOrUpdatePlay({
+        player_id: context_player.player_id,
+        game_id: context_game.game_id,
+        buyin: newTotalBuyin,
+        current_buyin: newCurrentBuyin,
+        is_cashed_out: false,
+      }, amount);
+
+      setEnteredAmount("");
+      setOpen(false);
+
+      toast({
+        title: "Success",
+        description: `You've purchased $${amount} in chips.`,
+      });
+    } catch (error) {
+      console.error("Error during the buy-in process:", error);
+      toast({
+        title: "Error",
+        description: "Failed to buy chips. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (value === "" || (/^\d+$/.test(value) && parseInt(value, 10) <= 10000)) {
+    if (value === "" || (/^\d+$/.test(value) && parseInt(value, 10) <= MAX_BUY_IN)) {
       setEnteredAmount(value);
     }
   };
@@ -107,13 +116,15 @@ export default function BuyChips() {
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              placeholder="Value in whole dollars $1-$10,000"
+              placeholder={`Value in whole dollars $1-$${MAX_BUY_IN}`}
               value={enteredAmount}
               onChange={handleInputChange}
               aria-describedby="buy-in-amount-description"
             />
           </div>
-          <Button onClick={handleBuyChipsEnter}>Enter</Button>
+          <Button onClick={handleBuyChipsEnter} disabled={isLoading}>
+            {isLoading ? "Processing..." : "Enter"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

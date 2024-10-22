@@ -13,6 +13,7 @@ import { ThemeProvider } from "./components/theme-provider";
 import { GlobalStateProvider } from "./components/GlobalStateProvider";
 import InitializeUserData from "@/app/components/initializeUserData";
 import { Toaster } from "@/components/ui/toaster";
+// import AnimatedBackground from "@/app/components/shared/animatedBackground";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,15 +27,16 @@ function AuthenticatedApp({ children }: { children: React.ReactNode }) {
     <GlobalStateProvider>
       <InitializeUserData />
       <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.className} flex flex-col min-h-screen`}>
+        <body className={`${inter.className} flex flex-col min-h-screen relative`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
+            {/* <AnimatedBackground /> */}
             <Header />
-            <main className="min-h-screen flex-grow">
+            <main className="min-h-screen flex-grow relative z-10">
               <div className="container mx-auto px-4 py-8">{children}</div>
             </main>
             <Footer />

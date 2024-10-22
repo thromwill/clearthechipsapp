@@ -9,25 +9,28 @@ import { getPlaysByPlayerId } from "@/lib/api/plays";
 import { Player } from "@/lib/types";
 
 export default function InitializeUserData() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const { setState, getState } = useGlobalState();
 
   useEffect(() => {
     const initializePlayerData = async () => {
-      // Proceed only if user is available and player_id is not set
-      if (!user){
-        console.error("No authenticated user");
-        return
-      }
+      if (!getState("context_player")) {
+        if (!isLoaded) {
+          return;
+        }
+  
+        if (!user){
+          console.error("No authenticated user");
+          return
+        }
 
-      if (!getState("player")) {
         let player: Partial<Player>;
 
         try {
           player = await getPlayerById(user.id);
 
           // Set player data in the global state
-          setState("player", player);
+          setState("context_player", player);
         } catch (error) {
           console.error("Failed to fetch player data:", error);
 
@@ -41,7 +44,7 @@ export default function InitializeUserData() {
           };
 
           // Set new player data in the global state
-          setState("player", player);
+          setState("context_player", player);
 
           // Persist new player data to the database
           await createOrUpdatePlayer(player);
@@ -54,15 +57,14 @@ export default function InitializeUserData() {
 
         if (!currentlyPlaying) {
           // If not currently playing, set these states to null
-          setState("currentGame", null);
-          setState("currentPlays", null);
-          setState("currentGameJoinCode", null);
+          setState("context_game", null);
+          setState("context_plays", null);
         }
       }
     };
 
     initializePlayerData();
-  }, [user]);
+  }, [user, isLoaded, getState, setState]);
 
   return null; // This component doesn't render anything
 }

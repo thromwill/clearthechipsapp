@@ -38,6 +38,7 @@ export interface Play {
   game_id: string;
   join_code?: string;
   buyin?: number;
+  current_buyin?: number;
   cashout?: number;
   is_currently_playing?: boolean;
   is_cashed_out?: boolean;

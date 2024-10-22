@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 95%;
+  --background: 0 0% 92%;
   --foreground: 222.2 84% 4.9%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 84% 4.9%;
@@ -71,4 +71,28 @@
 
 .animate-fade-out {
   animation: fadeOut 1s ease-out 4s forwards;
+}
+
+.input-transparent-caret:focus {
+  caret-color: transparent;
+}
+
+@layer utilities {
+  .bg-dot-pattern {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+@keyframes slide-diagonal {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-50%, -50%);
+  }
+}
+
+.animate-slide-diagonal {
+  animation: slide-diagonal 20s linear infinite;
 }

@@ -44,12 +44,22 @@ const CreateGameDialog: React.FC<CreateGameDialogProps> = ({
   const { toast } = useToast();
 
   const handleCreateGame = async () => {
-    const player = getState("player")
+    const context_player = getState("context_player")
+    const game = getState("context_game")
 
-    if (!player) {
+    if (!context_player) {
       toast({
         title: "Error",
         description: "Failed to retrieve user data. Please log in.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (game) {
+      toast({
+        title: "Error",
+        description: "You are already in a game. Please exit your game before creating a new one.",
         variant: "destructive",
       });
       return;
@@ -89,17 +99,17 @@ const CreateGameDialog: React.FC<CreateGameDialogProps> = ({
 
       const newGame = await createGame({
         game_name: gameName,
-        host_id: player.player_id,
+        host_id: context_player.player_id,
         case_id: selectedChipCaseId,
         big_blind: bigBlind,
         chip_values: chipValuesObject,
       });
 
       await addPlayerToGame(newGame.game_id, {
-        player_id: player.player_id,
-        org_id: player.org_id,
-        first_name: player.first_name,
-        last_name: player.last_name,
+        player_id: context_player.player_id,
+        org_id: context_player.org_id,
+        first_name: context_player.first_name,
+        last_name: context_player.last_name,
         avatar_id: "",
       });
 
@@ -120,6 +130,18 @@ const CreateGameDialog: React.FC<CreateGameDialogProps> = ({
     }
   };
 
+  const handleGameNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+  
+    // Filter the input to allow only a-z, A-Z, and 0-9 characters
+    const filteredValue = inputValue.replace(/[^a-zA-Z0-9 ]/g, "");
+  
+    // Ensure the name does not exceed 64 characters
+    if (filteredValue.length <= 64) {
+      setGameName(filteredValue);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -130,7 +152,7 @@ const CreateGameDialog: React.FC<CreateGameDialogProps> = ({
           <Input
             placeholder="Game Name"
             value={gameName}
-            onChange={(e) => setGameName(e.target.value)}
+            onChange={handleGameNameChange}
           />
           <Select value={stakes} onValueChange={setStakes}>
             <SelectTrigger>
@@ -143,6 +165,7 @@ const CreateGameDialog: React.FC<CreateGameDialogProps> = ({
               <SelectItem value="0.10/0.20">$0.10 / $0.20</SelectItem>
               <SelectItem value="0.25/0.50">$0.25 / $0.50</SelectItem>
               <SelectItem value="0.50/1.00">$0.50 / $1.00</SelectItem>
+              <SelectItem value="0.50/1.00">$1.00 / $2.00</SelectItem>
             </SelectContent>
           </Select>
           <ChipCases onSelect={setSelectedChipCaseId} />

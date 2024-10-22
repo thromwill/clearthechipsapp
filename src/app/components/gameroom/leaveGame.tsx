@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { useGlobalState } from "@/app/components/GlobalStateProvider";
 import { removePlayerFromGame, completeGame, getGameById } from "@/lib/api/game";
 import { createTransaction } from "@/lib/api/transaction";
-import { getPlaysByGameId } from "@/lib/api/plays";
 import { calculateTransactions } from "@/lib/calculate_transactions";
 import { useToast } from "@/hooks/use-toast";
-import { Game } from "@/lib/types";
 
 interface LeaveGameProps {
   onLeave: () => void;
@@ -20,10 +18,11 @@ const LeaveGame: React.FC<LeaveGameProps> = ({ onLeave }) => {
   const { toast } = useToast();
 
   const handleLeaveGame = async () => {
-    const player = getState("player");
-    const game = getState("currentGame") as Game | null;
-
-    if (!player || !game) {
+    const context_player = getState("context_player");
+    const context_game = getState("context_game")
+    const context_plays = getState("context_plays")
+    
+    if (!context_player || !context_game) {
       toast({
         title: "Error",
         description: "Unable to leave game. Missing game or player information.",
@@ -34,12 +33,17 @@ const LeaveGame: React.FC<LeaveGameProps> = ({ onLeave }) => {
 
     try {
       // Fetch the latest plays
-      const plays = await getPlaysByGameId(game.game_id);
-      if (!plays || plays.length === 0) {
-        throw new Error("No plays found for the game.");
+      if (!context_plays || context_plays.length === 0) {
+        console.error("Plays not in context")
+        toast({
+          title: "Error",
+          description: "Plays not found. Contact support.",
+          variant: "destructive",
+        });
+
       }
 
-      const currentPlay = plays.find((p) => p.player_id === player.player_id);
+      const currentPlay = context_plays.find((p) => p.player_id === context_player.player_id);
       if (!currentPlay) {
         toast({
           title: "Error",
@@ -59,10 +63,19 @@ const LeaveGame: React.FC<LeaveGameProps> = ({ onLeave }) => {
       }
 
       // Check if the player is the host and if there are remaining players
-      const updatedGame = await getGameById(game.game_id);
-      const isHost = player.player_id === updatedGame.host_id;
-      const remainingPlayers = plays.filter(
-        (p) => p.is_currently_playing && p.player_id !== player.player_id
+      const updatedGame = await getGameById(context_game.game_id);
+      const isHost = context_player.player_id === updatedGame.host_id;
+
+          // Add confirmation check before proceeding
+      if (isHost) {
+        const userConfirmed = window.confirm("Are you sure you want to end the game?");
+        if (!userConfirmed) {
+          return;
+        }
+      }
+      
+      const remainingPlayers = context_plays.filter(
+        (p) => p.is_currently_playing && p.player_id !== context_player.player_id
       );
 
       if (isHost && remainingPlayers.length > 0) {
@@ -75,14 +88,14 @@ const LeaveGame: React.FC<LeaveGameProps> = ({ onLeave }) => {
       }
 
       // Remove player from the game
-      await removePlayerFromGame(game.game_id, player.player_id);
+      await removePlayerFromGame(context_game.game_id, context_player.player_id);
 
       // If host or last player, complete the game
       if (isHost || remainingPlayers.length === 0) {
-        await completeGame(game.game_id);
+        await completeGame(context_game.game_id);
 
         // Calculate final balances and create transactions
-        const finalBalances = plays.reduce((acc, play) => {
+        const finalBalances = context_plays.reduce((acc, play) => {
           acc[play.player_id] =
             (play.cashout || 0) - (play.buyin || 0);
           return acc;
@@ -107,9 +120,8 @@ const LeaveGame: React.FC<LeaveGameProps> = ({ onLeave }) => {
 
       // Clear game state and redirect to the home page
       
-      setState("currentGame", null);
-      setState("currentPlays", null);
-      setState("currentGameJoinCode", null);
+      setState("context_game", null);
+      setState("context_plays", null);
       onLeave();
       router.push("/");
     } catch (error) {

@@ -33,7 +33,7 @@ export default function ChipInputDialog({
   onSubmit,
 }: ChipInputDialogProps) {
   const { getState } = useGlobalState();
-  const game = getState("currentGame");
+  const context_game = getState("context_game");
 
   const [chipInputs, setChipInputs] = useState<
     { color: string; quantity: string }[]
@@ -65,9 +65,9 @@ export default function ChipInputDialog({
           { color: "", quantity: "" },
           { color: "", quantity: "" },
         ]);
-      } else if (mode === "cashout" && game?.case_id) {
+      } else if (mode === "cashout" && context_game?.case_id) {
         try {
-          const gameChipCase = await getChipCaseById(game.case_id);
+          const gameChipCase = await getChipCaseById(context_game.case_id);
           if (gameChipCase.chips) {
             const chipEntries = Object.entries(gameChipCase.chips);
             setChipInputs(
@@ -89,7 +89,7 @@ export default function ChipInputDialog({
     };
 
     fetchChipCase();
-  }, [mode, chipCase, open, game?.case_id]);
+  }, [mode, chipCase, open, context_game?.case_id]);
 
   const handleAddChipInput = () => {
     if (chipInputs.length < 6) {
@@ -98,14 +98,25 @@ export default function ChipInputDialog({
   };
 
   const handleColorChange = (index: number, value: string) => {
+    // Filter the input to allow only a-z, A-Z, and spaces
+    // Enforce no more than 1 consecutive space and max length of 32 characters
+    const filteredValue = value
+      .replace(/[^a-zA-Z\s]/g, "") // Allow letters and spaces
+      .replace(/\s{2,}/g, " ") // Replace consecutive spaces with a single space
+      .trim() // Remove leading and trailing spaces
+      .substring(0, 32); // Limit to 32 characters
+  
     const updatedInputs = [...chipInputs];
-    updatedInputs[index].color = value;
+    updatedInputs[index].color = filteredValue;
     setChipInputs(updatedInputs);
   };
-
+  
   const handleQuantityChange = (index: number, value: string) => {
+    // Filter the input to allow only numeric values and limit to 5 digits
+    const filteredValue = value.replace(/[^0-9]/g, "").substring(0, 5);
+  
     const updatedInputs = [...chipInputs];
-    updatedInputs[index].quantity = value;
+    updatedInputs[index].quantity = filteredValue;
     setChipInputs(updatedInputs);
   };
 
@@ -116,6 +127,63 @@ export default function ChipInputDialog({
   };
 
   const handleSubmit = () => {
+    // Check if the case name is required and empty
+    if ((mode === "add" || mode === "edit") && !caseName.trim()) {
+      toast({
+        title: "Error",
+        description: "Case name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check case name length
+    if ((mode === "add" || mode === "edit") && caseName.trim().length > 64) {
+      toast({
+        title: "Error",
+        description: "Case name must be 64 characters or less.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if all chip inputs have both color and quantity
+    const hasEmptyFields = chipInputs.some(
+      (input) => !input.color.trim() || !input.quantity.trim()
+    );
+
+    if (hasEmptyFields) {
+      toast({
+        title: "Error",
+        description: "All chip color and quantity fields must be filled.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for unique colors
+    const colorSet = new Set();
+    const hasDuplicateColors = chipInputs.some((input) => {
+      if (input.color.trim()) {
+        if (colorSet.has(input.color.trim())) {
+          return true; // Duplicate found
+        }
+        colorSet.add(input.color.trim());
+      }
+      return false; // No duplicate found
+    });
+
+     
+
+    if (hasDuplicateColors) {
+      toast({
+        title: "Error",
+        description: "Chip colors must be unique.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const chips: { [color: string]: number } = {};
     chipInputs.forEach((input) => {
       if (input.color && input.quantity) {
@@ -177,7 +245,7 @@ export default function ChipInputDialog({
                   disabled={mode === "cashout"}
                 />
                 <Input
-                  type="number"
+                  type="text"
                   placeholder="Quantity"
                   value={input.quantity}
                   onChange={(e) => handleQuantityChange(index, e.target.value)}

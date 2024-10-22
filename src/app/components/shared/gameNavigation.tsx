@@ -15,13 +15,13 @@ const GameNavigation: React.FC<GameNavigationProps> = ({ onNavigate }) => {
   const router = useRouter();
   const { getState } = useGlobalState();
 
-  const currentGameJoinCode = getState("currentGameJoinCode");
+  const context_game = getState("context_game");
   const isInGameRoom = pathname.includes("/gameroom/");
 
 
   const handleBackToGame = () => {
     onNavigate();
-    router.push(`/gameroom/${currentGameJoinCode}`);
+    router.push(`/gameroom/${context_game.join_code}`);
   };
 
   const handleHome = () => {
@@ -31,7 +31,7 @@ const GameNavigation: React.FC<GameNavigationProps> = ({ onNavigate }) => {
 
   if (isInGameRoom) {
     return <LeaveGame onLeave={onNavigate} />;
-  } else if (currentGameJoinCode) {
+  } else if (context_game?.join_code) {
     return (
       <button
         onClick={handleBackToGame}

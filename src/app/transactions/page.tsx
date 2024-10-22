@@ -5,21 +5,9 @@ import CompletedCarousel from "@/app/components/transactions/completedCarousel";
 import PendingCarousel from "@/app/components/transactions/pendingCarousel";
 import { ChevronRight } from "lucide-react";
 import { Transaction } from "@/lib/types";
-import { getTransactionsByPlayerId } from "@/lib/api/transaction"; // API call to fetch transactions
+import { getTransactionsByPlayerId } from "@/lib/api/transaction";
 import { useGlobalState } from "@/app/components/GlobalStateProvider";
 import { useToast } from "@/hooks/use-toast";
-
-// Sample transactions for testing (commented out for easy switching)
-/*
-const transactions: Transaction[] = Array.from({ length: 10 }, (_, i) => ({
-  transaction_id: (i + 1).toString(),
-  by_id: `by_id_${i}`,
-  for_id: `for_id_${i}`,
-  amount: 5.0,
-  created: "2020-01-01T20:24:55.522+00:00",
-  completed: "2020-01-02T20:24:55.522+00:00",
-}));
-*/
 
 export default function Transactions() {
   const [pendingTransactions, setPendingTransactions] = useState<Transaction[]>([]);
@@ -28,12 +16,12 @@ export default function Transactions() {
   const { toast } = useToast();
   const { getState } = useGlobalState();
   
-  const player = getState("player"); // Fetch player ID from global state
+  const context_player = getState("context_player");
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        if (!player) {
+        if (!context_player) {
           toast({
             title: "Error",
             description: "Player is missing.",
@@ -43,7 +31,7 @@ export default function Transactions() {
         }
         
         // Fetch transactions by player ID
-        const transactions = await getTransactionsByPlayerId(player.player_id);
+        const transactions = await getTransactionsByPlayerId(context_player.player_id);
 
         // Separate transactions into pending and completed
         const pending = transactions.filter((t) => !t.completed);
@@ -64,12 +52,12 @@ export default function Transactions() {
     };
 
     fetchTransactions();
-  }, [player.player_id, toast]);
+  }, [context_player, toast]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return `${date.getMonth() + 1} ${date.getDate()} ${date.getFullYear()}`;
-  };
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+};
 
   if (loading) {
     return <div className="p-4 md:p-8 min-h-screen">Loading transactions...</div>;

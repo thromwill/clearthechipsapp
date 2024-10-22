@@ -1,5 +1,7 @@
 "use client";
 
+// TODO: Remove Clear all state button used for testing
+
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,11 +22,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import GameNavigation from "@/app/components/shared/gameNavigation";
-import { useTheme } from "next-themes";
+import { useGlobalState } from "../GlobalStateProvider";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme } = useTheme();
+  const { removeState } = useGlobalState();
 
   const closeMenu = () => {
     setIsOpen(false);
@@ -34,6 +36,7 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 bg-background/80 backdrop-blur-md border-b`}
     >
+      
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -53,13 +56,13 @@ export default function Header() {
                     <GameNavigation onNavigate={closeMenu} />
                   </li>
                   <li>
-                    <NavLink href="/profile" onClick={closeMenu}>
-                      Profile
+                    <NavLink href="/transactions" onClick={closeMenu}>
+                      Transactions
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink href="/transactions" onClick={closeMenu}>
-                      Transactions
+                    <NavLink href="/profile" onClick={closeMenu}>
+                      Profile
                     </NavLink>
                   </li>
                   <li>
@@ -76,6 +79,9 @@ export default function Header() {
             <span className="text-xl font-semibold text-foreground hidden sm:inline">
               Clear The Chips
             </span>
+            <button onClick={() => removeState()}>
+                Clear All State
+              </button>
           </Link>
         </div>
         <nav className="hidden md:block">
@@ -84,10 +90,10 @@ export default function Header() {
               <GameNavigation onNavigate={closeMenu} />
             </li>
             <li>
-              <NavLink href="/profile">Profile</NavLink>
+              <NavLink href="/transactions">Transactions</NavLink>
             </li>
             <li>
-              <NavLink href="/transactions">Transactions</NavLink>
+              <NavLink href="/profile">Profile</NavLink>
             </li>
             <li>
               <NavLink href="/settings">Settings</NavLink>

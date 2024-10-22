@@ -18,6 +18,18 @@ export const getTransactionsByPlayerId = async (playerId: string): Promise<Trans
       by:by_id(first_name, last_name),
       for:for_id(first_name, last_name)
     `,
-    eq: ['by_id', playerId]
+    eq: ['by_id', playerId], // Condition for by_id
+  }).then(byTransactions => {
+    return query<Transaction>('TRANSACTION', {
+      select: `
+        *,
+        by:by_id(first_name, last_name),
+        for:for_id(first_name, last_name)
+      `,
+      eq: ['for_id', playerId], // Condition for for_id
+    }).then(forTransactions => {
+      // Combine both results
+      return [...byTransactions, ...forTransactions];
+    });
   });
 };

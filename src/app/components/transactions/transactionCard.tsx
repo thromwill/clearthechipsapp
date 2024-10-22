@@ -3,6 +3,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import AvatarImg from "/src/public/images/avatars/1.png";
 import { Transaction } from "@/lib/types";
+import { useGlobalState } from "../GlobalStateProvider";
 
 type TransactionCardProps = {
   transaction: Transaction;
@@ -16,6 +17,9 @@ export default function TransactionCard({
   onClick,
 }: TransactionCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const  { getState } = useGlobalState();
+  const context_player = getState("context_player")
+  const isIncoming = transaction.for_id == context_player.player_id
 
   return (
     <div
@@ -49,15 +53,14 @@ export default function TransactionCard({
         <span
           className={cn(
             "text-lg font-semibold",
-            transaction.amount > 0 ? "text-green-500" : "text-red-500"
+            isIncoming ? "text-green-500" : "text-red-500" // Use green for incoming, red for outgoing
           )}
         >
-          {transaction.amount > 0 ? "+" : "-"}$
-          {Math.abs(transaction.amount).toFixed(2)}
+          {isIncoming ? "+" : "-"}${Math.abs(transaction.amount).toFixed(2)}
         </span>
       </div>
       <div className="mt-4 w-full">
-        <div className="text-sm text-gray-600">from</div>
+        <div className="text-sm text-gray-600">{isIncoming ? "From" : "To"}</div>
         <div className="font-semibold truncate">
           {transaction.by?.first_name && transaction.by?.last_name
             ? `${transaction.by.first_name} ${transaction.by.last_name}`

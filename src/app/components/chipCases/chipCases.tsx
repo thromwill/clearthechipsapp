@@ -28,13 +28,13 @@ export default function ChipCases({ onSelect }: ChipCasesProps) {
   const [chipInputMode, setChipInputMode] = useState<"add" | "edit">("add");
   const { toast } = useToast();
 
-  const player = getState("player");
+  const context_player = getState("context_player");
 
   useEffect(() => {
-    if (player.player_id) {
+    if (context_player .player_id) {
       fetchChipCases();
     }
-  }, [player.player_id]);
+  }, [context_player .player_id]);
 
   useEffect(() => {
     // Whenever the index changes, call onSelect with the current chip case ID
@@ -47,7 +47,7 @@ export default function ChipCases({ onSelect }: ChipCasesProps) {
 
   const fetchChipCases = async () => {
     try {
-      const cases = await getChipCasesByPlayerId(player.player_id);
+      const cases = await getChipCasesByPlayerId(context_player .player_id);
       setChipCases(cases);
     } catch (error) {
       console.error("Failed to fetch chip cases:", error);
@@ -86,7 +86,7 @@ export default function ChipCases({ onSelect }: ChipCasesProps) {
     try {
       const updatedCase = await createOrUpdateChipCase({
         case_id: currentCase?.case_id || generateUUID(),
-        player_id: player.player_id,
+        player_id: context_player .player_id,
         case_name: caseName,
         chips: chips,
       });
@@ -122,7 +122,14 @@ export default function ChipCases({ onSelect }: ChipCasesProps) {
   const handleRemoveChipCase = async (chipCase: ChipCase) => {
     try {
       await removeChipCase(chipCase.case_id);
-      setChipCases(chipCases.filter((c) => c.case_id !== chipCase.case_id));
+      const updatedChipCases = chipCases.filter((c) => c.case_id !== chipCase.case_id);
+      setChipCases(updatedChipCases);
+  
+      // Reset currentIndex if it's out of bounds after removal
+      if (currentIndex >= updatedChipCases.length) {
+        setCurrentIndex(0); // Set to 0 if current index is invalid
+      }
+  
       toast({
         title: "Success",
         description: "Chip case removed successfully.",
