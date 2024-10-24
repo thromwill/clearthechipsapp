@@ -23,7 +23,7 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
   const [state, setStateData] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    const savedState = localStorage.getItem("globalState");
+    const savedState = sessionStorage.getItem("globalState");
     if (savedState) {
       setStateData(JSON.parse(savedState));
     }
@@ -32,7 +32,7 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
   const setState = (key: string, value: any) => {
     setStateData((prevState) => {
       const newState = { ...prevState, [key]: value };
-      localStorage.setItem("globalState", JSON.stringify(newState));
+      sessionStorage.setItem("globalState", JSON.stringify(newState));
       return newState;
     });
   };
@@ -55,7 +55,7 @@ export const GlobalStateProvider = ({ children }: { children: ReactNode }) => {
           delete newState[key];
         });
       }
-      localStorage.setItem("globalState", JSON.stringify(newState));
+      sessionStorage.setItem("globalState", JSON.stringify(newState));
       return newState;
     });
   };

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
@@ -13,6 +13,17 @@ import { getPlaysByGameId, subscribeToPlays } from "@/lib/api/plays";
 import { useToast } from "@/hooks/use-toast";
 import { useGlobalState } from "@/app/components/GlobalStateProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import PlayerList from "@/app/components/gameroom/playerList";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Users, Coins } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface GameRoomProps {
   params: { id: string };
@@ -26,7 +37,7 @@ interface GameMessage {
   content: string;
 }
 
-const GameRoom: React.FC<GameRoomProps> = ({ params }) => {
+export default function GameRoom({ params }: GameRoomProps) {
   const [game, setGame] = useState<Game | null>(null);
   const [plays, setPlays] = useState<Play[]>([]);
   const [messages, setMessages] = useState<GameMessage[]>([]);
@@ -39,15 +50,14 @@ const GameRoom: React.FC<GameRoomProps> = ({ params }) => {
   const joinCode = params.id;
   const context_player = getState("context_player");
 
-
   const messageEndRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     if (context_player) {
       fetchGameData();
     }
   }, [context_player]);
-  
+
   useEffect(() => {
     let gameSubscription: { unsubscribe: () => void } | null = null;
     let playsSubscription: { unsubscribe: () => void } | null = null;
@@ -64,7 +74,7 @@ const GameRoom: React.FC<GameRoomProps> = ({ params }) => {
   }, [game?.game_id]);
 
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    messageEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [messages]);
 
   const fetchGameData = async () => {
@@ -81,7 +91,9 @@ const GameRoom: React.FC<GameRoomProps> = ({ params }) => {
         const parsedMessages = parseMessages(gameData.messages);
         setMessages(parsedMessages);
 
-        const currentPlayerPlay = playerData.find((play) => play.player_id === context_player .player_id);
+        const currentPlayerPlay = playerData.find(
+          (play) => play.player_id === context_player.player_id
+        );
         if (currentPlayerPlay) {
           setCurrentBuyIn(currentPlayerPlay.current_buyin || 0);
         }
@@ -95,11 +107,11 @@ const GameRoom: React.FC<GameRoomProps> = ({ params }) => {
       });
     }
   };
-  
+
   const parseMessages = (messages: any): GameMessage[] => {
     if (Array.isArray(messages)) {
       return messages;
-    } else if (typeof messages === 'string') {
+    } else if (typeof messages === "string") {
       try {
         const parsed = JSON.parse(messages);
         return Array.isArray(parsed) ? parsed : [];
@@ -133,49 +145,100 @@ const GameRoom: React.FC<GameRoomProps> = ({ params }) => {
   };
 
   const renderMessage = (message: GameMessage) => (
-    <div key={message.timestamp} className="py-1">
-      <span className="text-sm">
-        <span className="text-xs text-gray-500 mr-2">
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+    <div
+      key={message.timestamp}
+      className="py-1 border-b border-border last:border-b-0"
+    >
+      <div className="flex space-x-2 items-center">
+        <span className="text-xs text-muted-foreground">
+          {new Date(message.timestamp).toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit",
+          })}
         </span>
-        {message.content}
-      </span>
+        <p className="text-xs">{message.content}</p>
+      </div>
     </div>
   );
 
+  const moneyInTheGame = plays.reduce(
+    (sum, play) => sum + (play.buyin || 0),
+    0
+  );
+  const moneyOnTable = plays.reduce(
+    (sum, play) => sum + ((play.buyin || 0) - (play.cashout || 0)),
+    0
+  );
+
   return (
-    <div className="min-h-screen p-2 md:p-6 lg:p-8">
-      <div className="flex flex-col container mx-auto max-w-4xl space-y-6">
-        <header className="flex sm:flex-row justify-between items-center gap-4">
-          <ChipValues chipValues={chipValues} />
-          <div className="flex items-center gap-2">
-            <p className="text-xl font-bold">{game?.join_code || "Loading..."}</p>
-          </div>
-        </header>
-
-        <h1 className="text-2xl md:text-3xl font-bold text-center">{game?.game_name || "Loading..."}</h1>
-
-        <div className="max-w-fit">
-          <PlayerCarousel
-            players={plays.filter((play) => play.is_currently_playing).map((play) => play.PLAYER)}
-          />
-        </div>
-
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-4">
-            <Image src={Logo} alt="Logo" width={36} height={36} />
-            <div>
-              <p className="text-sm text-muted-foreground">Bought In For</p>
-              <p className="text-xl font-semibold">${currentBuyIn.toFixed(2)}</p>
+    <div className="min-h-screen bg-background p-4">
+      <div className="space-y-4 max-w-md mx-auto">
+        <div className="flex justify-between">
+          <div className="flex flex-col items-start">
+            <h1 className="text-xl font-bold">
+              {game?.game_name || "Loading..."}
+            </h1>
+            <div className="text-gray text-xs">
+              {game?.join_code || "Loading..."}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row justify-center gap-2 mt-4">
+          <div className="flex items-center space-x-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Users className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Players</DialogTitle>
+                </DialogHeader>
+                <PlayerList plays={plays} />
+              </DialogContent>
+            </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Coins className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Chip Values</DialogTitle>
+                </DialogHeader>
+                <ChipValues
+                  chipValues={chipValues}
+                  moneyInTheGame={moneyInTheGame}
+                  moneyOnTable={moneyOnTable}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        <PlayerCarousel
+          players={plays
+            .filter((play) => play.is_currently_playing)
+            .map((play) => play.PLAYER)}
+        />
+
+        <div className="flex flex-col items-center space-y-2">
+          <div className="flex items-center space-x-4">
+            <Image src={Logo} alt="Logo" width={36} height={36} />
+            <div>
+              <p className="text-xs text-muted-foreground">Bought In For</p>
+              <p className="text-lg font-semibold">
+                ${currentBuyIn.toFixed(2)}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col space-x-2">
             <BuyChips />
             <Cashout />
           </div>
         </div>
 
-        <ScrollArea className="h-32 border rounded-md p-2">
+        <ScrollArea className="h-24 w-full">
           <div className="space-y-2">
             {messages.map(renderMessage)}
             <div ref={messageEndRef} />
@@ -184,6 +247,4 @@ const GameRoom: React.FC<GameRoomProps> = ({ params }) => {
       </div>
     </div>
   );
-};
-
-export default GameRoom;
+}

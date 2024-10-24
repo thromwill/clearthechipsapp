@@ -1,57 +1,56 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  RedirectToSignIn,
-} from "@clerk/nextjs";
-import Header from "./components/shared/header";
-import Footer from "./components/shared/footer";
-import { ThemeProvider } from "./components/theme-provider";
-import { GlobalStateProvider } from "./components/GlobalStateProvider";
-import InitializeUserData from "@/app/components/initializeUserData";
-import { Toaster } from "@/components/ui/toaster";
-// import AnimatedBackground from "@/app/components/shared/animatedBackground";
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/nextjs"
+import Header from "./components/shared/header"
+import Footer from "./components/shared/footer"
+import { ThemeProvider } from "./components/theme-provider"
+import { GlobalStateProvider } from "./components/GlobalStateProvider"
+import InitializeUserData from "@/app/components/initializeUserData"
+import { Toaster } from "@/components/ui/toaster"
+import { OnboardingProvider } from '@/app/components/onboarding/OnboardingContext'
+import OnboardingFlow from "@/app/components/onboarding/OnboardingFlow"
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Clear The Chips",
   description: "Easily manage your home poker game.",
-};
+}
 
 function AuthenticatedApp({ children }: { children: React.ReactNode }) {
   return (
     <GlobalStateProvider>
-      <InitializeUserData />
-      <html lang="en" suppressHydrationWarning>
-        <body className={`${inter.className} flex flex-col min-h-screen relative`}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {/* <AnimatedBackground /> */}
-            <Header />
-            <main className="min-h-screen flex-grow relative z-10">
-              <div className="container mx-auto px-4 py-8">{children}</div>
-            </main>
-            <Footer />
-          </ThemeProvider>
-          <Toaster />
-        </body>
-      </html>
+      <OnboardingProvider>
+        <InitializeUserData />
+        <html lang="en" suppressHydrationWarning>
+          <body className={`${inter.className} flex flex-col min-h-screen relative`}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <Header />
+              <main className="min-h-screen flex-grow relative z-10">
+                <div className="container mx-auto px-4 py-8">
+                  <OnboardingFlow>{children}</OnboardingFlow>
+                </div>
+              </main>
+              <Footer />
+            </ThemeProvider>
+            <Toaster />
+          </body>
+        </html>
+      </OnboardingProvider>
     </GlobalStateProvider>
-  );
+  )
 }
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <ClerkProvider>
@@ -62,5 +61,5 @@ export default function RootLayout({
         <RedirectToSignIn />
       </SignedOut>
     </ClerkProvider>
-  );
+  )
 }

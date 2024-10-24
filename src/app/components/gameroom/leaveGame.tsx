@@ -119,7 +119,6 @@ const LeaveGame: React.FC<LeaveGameProps> = ({ onLeave }) => {
       }
 
       // Clear game state and redirect to the home page
-      
       setState("context_game", null);
       setState("context_plays", null);
       onLeave();
@@ -136,7 +135,7 @@ const LeaveGame: React.FC<LeaveGameProps> = ({ onLeave }) => {
 
   return (
     <button
-      className="text-gray-600 hover:text-gray-900 transition-colors"
+      className="text-gray-500 hover:text-gray-900 transition-colors"
       onClick={handleLeaveGame}
     >
       Leave Game

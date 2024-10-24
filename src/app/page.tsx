@@ -12,8 +12,8 @@ import {
   getGameByJoinCode,
   getPlayersInGame,
   addPlayerToGame,
-  updatePlayerInGame,
 } from "@/lib/api/game";
+import { createOrUpdatePlay } from "@/lib/api/plays";
   
 export default function Home() {
   const [showCreateGame, setShowCreateGame] = useState(false);
@@ -27,7 +27,7 @@ export default function Home() {
     const context_game = getState("context_game");
     
     if (context_game) {
-      router.push(`/gameroom/${context_game}`);
+      router.push(`/gameroom/${context_game.join_code}`);
     }
   }, [getState]);
   
@@ -77,7 +77,9 @@ export default function Home() {
             description: "You're already in this game.",
           });
         } else {
-          await updatePlayerInGame(game.game_id, context_player .player_id, {
+          await createOrUpdatePlay({
+            game_id: game.game_id,
+            player_id: context_player.player_id,
             is_currently_playing: true,
           });
         }

@@ -68,7 +68,6 @@ export const addPlayerToGame = async (gameId: string, player: Player): Promise<v
     buyin: 0,
     cashout: 0,
     is_currently_playing: true,
-    is_cashed_out: false
   };
   await insert<Play>('PLAYS', newPlay);
   await addMessageToGame(gameId, createGameMessage(player, "joined the game!"));
